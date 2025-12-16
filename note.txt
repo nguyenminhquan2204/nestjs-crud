@@ -1,0 +1,7 @@
+1. dbdiagram.io
+
+-----------------
+npm i -g @nestjs/cli
+npm install prisma --save-dev
+npm install @prisma/client
+npx prisma init
