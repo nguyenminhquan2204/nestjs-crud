@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 import './shared/config';
 import { UnprocessableEntityException, ValidationPipe } from '@nestjs/common';
+import { LoggingInterceptor } from './shared/interceptor/logging.interceptor';
+import { TransformInterceptor } from './shared/interceptor/transform.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
@@ -9,9 +11,9 @@ async function bootstrap() {
     whitelist: true,
     forbidNonWhitelisted: true,
     transform: true,
-    transformOptions: {
-      enableImplicitConversion: true
-    },
+    // transformOptions: {
+    //   enableImplicitConversion: true
+    // },
     exceptionFactory: (validationErrors) => {
       // console.log(validationErrors);
       return new UnprocessableEntityException(validationErrors.map(error => ({
@@ -20,6 +22,8 @@ async function bootstrap() {
       })));
     }
   }));
+  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalInterceptors(new TransformInterceptor());
   await app.listen(process.env.PORT ?? 3000)
 }
 bootstrap()
