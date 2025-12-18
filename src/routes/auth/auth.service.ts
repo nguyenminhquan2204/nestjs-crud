@@ -62,4 +62,30 @@ export class AuthService {
       })
       return { accessToken, refreshToken}
    }
+
+   async refreshToken(refreshToken: string) {
+      try {
+         const { userId } = await this.tokenService.verifyRefreshToken(refreshToken);
+
+         await this.prismaService.refreshToken.findUniqueOrThrow({
+            where: {
+               token: refreshToken
+            }
+         })
+
+         await this.prismaService.refreshToken.delete({
+            where: {
+               token: refreshToken
+            }
+         })
+
+         return await this.generateTokens({ userId });
+      } catch (error) {
+         // case refresh token notify user
+         if(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+            throw new UnauthorizedException('Refresh token has been revoked');
+         }
+         throw new UnauthorizedException();
+      }
+   }
 }
