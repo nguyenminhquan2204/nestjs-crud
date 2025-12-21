@@ -42,6 +42,9 @@ class ConfigSchema {
     message: 'REFRESH_TOKEN_EXPIRES_IN must be like 7d, 30d',
   })
   REFRESH_TOKEN_EXPIRES_IN!: string;
+
+  @IsString()
+  SECRET_API_KEY: string
 }
 
 /**
