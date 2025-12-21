@@ -1,9 +1,9 @@
 import { ConflictException, Injectable, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { HashingService } from 'src/shared/services/hashing.service';
 import { PrismaService } from 'src/shared/services/prisma.service';
 import { LoginBodyDTO, RegisterBodyDTO } from './auth.dto';
 import { TokenService } from 'src/shared/services/token.service';
+import { isUniqueConstraintPrismaError, isNotFoundPrismaError } from 'src/shared/helpers';
 
 @Injectable()
 export class AuthService {
@@ -25,7 +25,7 @@ export class AuthService {
          return user;
       } catch (error) {
          // console.log(error);
-         if(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+         if(isUniqueConstraintPrismaError(error)) {
             throw new ConflictException('Email already exists');
          }
          throw error;  
@@ -66,7 +66,6 @@ export class AuthService {
    async refreshToken(refreshToken: string) {
       try {
          const { userId } = await this.tokenService.verifyRefreshToken(refreshToken);
-
          await this.prismaService.refreshToken.findUniqueOrThrow({
             where: {
                token: refreshToken
@@ -78,11 +77,10 @@ export class AuthService {
                token: refreshToken
             }
          })
-
          return await this.generateTokens({ userId });
       } catch (error) {
          // case refresh token notify user
-         if(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+         if(isNotFoundPrismaError(error)) {
             throw new UnauthorizedException('Refresh token has been revoked');
          }
          throw new UnauthorizedException();
